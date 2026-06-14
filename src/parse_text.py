@@ -1433,7 +1433,7 @@ class ParseTextTwee:
 
 			if self.is_comment(line) or self.is_event(line) or self.is_only_marks(line):
 				results.append(False)
-			elif "<span " in line or "<<set _text_output" in line:
+			elif "<span " in line or "<<set _text_output" in line or "<<skill_difficulty" in line:
 				results.append(True)
 			elif line.startswith("<"):
 				results.append(False)
