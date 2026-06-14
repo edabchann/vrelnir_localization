@@ -9,7 +9,7 @@ DIR_JS_MODULE_ROOT = DIR_DATA_ROOT / "jsmodule"
 DIR_ARCON_ROOT = DIR_JS_MODULE_ROOT / "acorn"
 SOURCE_TYPE = Literal['script', 'module']
 ECMA_VERSION = Literal[
-    3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 'latest']
+    3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2026, 'latest']
 REGISTER_FUNC = """
 function registerFunc(key) {
     return function () { 
@@ -84,7 +84,7 @@ class AcornOptionParam(TypedDict, total=False):
 
 @dataclass
 class AcornOption:
-    ecmaVersion: ECMA_VERSION = 2020
+    ecmaVersion: ECMA_VERSION = 2026
     sourceType: SOURCE_TYPE = "script"
     ranges: bool = False
     preserveParens: bool = False
