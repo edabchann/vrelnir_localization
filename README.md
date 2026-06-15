@@ -31,7 +31,7 @@
    ```shell
    uv sync
    ```
-3. 在 `.env` 里填你的 `token` (`PARATRANZ_TOKEN`), 在 `https://paratranz.cn/users/my` 的设置里找
+3. 在 `.env` 里填你的 `token` (`PARATRANZ_TOKEN` 和 `GITGUD_TOKEN`), 在 `https://paratranz.cn/users/my` 和 `https://gitgud.io/-/user_settings/personal_access_tokens?page=1&sort=expires_asc` 的设置里找
 4. 在 `.env` 里修改版本号 (`CHINESE_VERSION`)
 5. 运行 `main.py` 
    ```shell
