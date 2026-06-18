@@ -36,9 +36,6 @@ class ProjectDOL:
         with open(DIR_JSON_ROOT / "blacklists.json", "r", encoding="utf-8") as fp:
             self._blacklists: dict[str, list] = json.load(fp)
 
-        with open(DIR_JSON_ROOT / "whitelists.json", "r", encoding="utf-8") as fp:
-            self._whitelists: dict[str, list] = json.load(fp)
-
         self._type: str = type_
         self._version: str = None
         self._mention_name = "" if self._type == "common" else "dev"
@@ -244,15 +241,7 @@ class ProjectDOL:
         for root, dir_list, file_list in os.walk(texts_dir):
             dir_name = Path(root).absolute().name
             for file in file_list:
-                if not file.endswith(SUFFIX_TWEE):
-                    if not file.endswith(SUFFIX_JS):
-                        continue
-
-                    if (
-                        dir_name in self._whitelists
-                        and file in self._whitelists[dir_name]
-                    ):
-                        self._game_texts_file_lists.append(Path(root).absolute() / file)
+                if not file.endswith(SUFFIX_TWEE) and not file.endswith(SUFFIX_JS):
                     continue
 
                 if dir_name not in self._blacklists:
