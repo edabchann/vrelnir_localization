@@ -688,7 +688,7 @@ class ProjectDOL:
                         / Path(root).relative_to(
                             DIR_RAW_DICTS / type_manual / self._version / "csv" / "game"
                         )
-                        / f"{file.split('.')[0]}.js".replace("utf8\\", "")
+                        / file.removesuffix(".csv")
                     )
                 else:
                     file_mapping[Path(root).absolute() / file] = (
@@ -696,7 +696,7 @@ class ProjectDOL:
                         / Path(root).relative_to(
                             DIR_RAW_DICTS / type_manual / self._version / "csv" / "game"
                         )
-                        / f"{file.split('.')[0]}.twee".replace("utf8\\", "")
+                        / f"{file.removesuffix('.csv')}.twee"
                     )
 
         tasks = [
