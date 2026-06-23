@@ -224,6 +224,7 @@ class FileNamesJS(Enum):
 	FEATS_FULL = "feats.js"
 	SHOP_FULL = "shop.js"
 	PLANT_SETUP_FULL = "plant-setup.js"
+	FOODSTUFF_FULL = "foodstuff.js"
 
 	""" special-masturbation """
 	ACTIONS_FULL = "actions.js"

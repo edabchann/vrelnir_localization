@@ -2991,6 +2991,8 @@ class ParseTextJS:
 			return self._parse_shop()
 		elif FileNamesJS.PLANT_SETUP_FULL.value == self._filename:
 			return self._parse_plant_setup()
+		elif FileNamesJS.FOODSTUFF_FULL.value == self._filename:
+			return self._parse_foodstuff()
 		return self.parse_normal()
 
 	def _parse_feats(self):
@@ -3013,6 +3015,10 @@ class ParseTextJS:
 	def _parse_plant_setup(self):
 		"""json"""
 		return self.parse_type_only({"plural:", "singular:", "seed_name:", "ingredients:", "type:"})
+
+	def _parse_foodstuff(self):
+		"""json"""
+		return self.parse_type_only({"name:", "singular:", "plural:", "category:", "ingredients:"})
 
 	""" special-masturbation """
 
