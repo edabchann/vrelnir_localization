@@ -1,8 +1,8 @@
-name: DOL Chinese Compile
+name: DOL Chinese Compile Beta Latest
 
 on:
   schedule:
-    - cron: "0 18 * * 0"
+    - cron: "0 18 * * *"
   workflow_dispatch:
 
 permissions:
@@ -28,7 +28,7 @@ jobs:
       - name: Run build
         env:
           PARATRANZ_TOKEN: ${{ secrets.PARATRANZ_TOKEN }}
-        run: uv run python main.py -D
+        run: uv run python main.py -D beta
 
       - name: Clone output repository
         uses: GuillaumeFalourd/clone-github-repo-action@v2
@@ -39,7 +39,7 @@ jobs:
 
       - name: Copy output
         run: |
-          cp degrees-of-lewdity-master/Degrees\ of\ Lewdity*.html dol-chinese/index.html
+          cp degrees-of-lewdity-master/Degrees\ of\ Lewdity*.html dol-chinese/beta.html
           cp degrees-of-lewdity-master/style.css dol-chinese/ 2>/dev/null || true
           cp -r degrees-of-lewdity-master/img dol-chinese/ 2>/dev/null || true
 
@@ -49,5 +49,5 @@ jobs:
           git config user.email "${{ secrets.GIT_EMAIL }}"
           git config user.name "${{ secrets.GIT_USERNAME }}"
           git add .
-          git diff --staged --quiet || git commit -m "稳定版更新 $(date +%Y-%m-%d)"
+          git diff --staged --quiet || git commit -m "测试版更新 $(date +%Y-%m-%d)"
           git push
