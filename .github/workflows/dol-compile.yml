@@ -61,11 +61,10 @@ jobs:
 
       - name: Clone output repository
         if: steps.check.outputs.deploy == 'true'
-        uses: GuillaumeFalourd/clone-github-repo-action@v2
-        with:
-          owner: ${{ steps.check.outputs.owner }}
-          repository: ${{ steps.check.outputs.repo }}
-          access-token: ${{ secrets.ACCESS_TOKEN }}
+        run: |
+          git clone \
+            "https://x-access-token:${{ secrets.ACCESS_TOKEN }}@github.com/${{ steps.check.outputs.owner }}/${{ steps.check.outputs.repo }}.git" \
+            dol-chinese
 
       - name: Copy output
         if: steps.check.outputs.deploy == 'true'
