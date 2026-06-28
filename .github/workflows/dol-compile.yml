@@ -30,26 +30,41 @@ jobs:
           PARATRANZ_TOKEN: ${{ secrets.PARATRANZ_TOKEN }}
         run: uv run python main.py -D
 
-      - name: Check deploy secrets
+      - name: Check deploy config
         id: check
+        env:
+          S_OWNER: ${{ secrets.GIT_OWNER }}
+          V_OWNER: ${{ vars.GIT_OWNER }}
+          S_REPO: ${{ secrets.GIT_REPO }}
+          V_REPO: ${{ vars.GIT_REPO }}
+          S_EMAIL: ${{ secrets.GIT_EMAIL }}
+          V_EMAIL: ${{ vars.GIT_EMAIL }}
+          S_USER: ${{ secrets.GIT_USERNAME }}
+          V_USER: ${{ vars.GIT_USERNAME }}
+          TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
+          OWNER="${S_OWNER:-${V_OWNER:-}}"
+          REPO="${S_REPO:-${V_REPO:-}}"
+          EMAIL="${S_EMAIL:-${V_EMAIL:-}}"
+          USERNAME="${S_USER:-${V_USER:-}}"
+          echo "owner=[$OWNER] repo=[$REPO] token=[${TOKEN:+***}]"
           if [ -n "$OWNER" ] && [ -n "$REPO" ] && [ -n "$TOKEN" ]; then
             echo "deploy=true" >> "$GITHUB_OUTPUT"
+            echo "owner=$OWNER" >> "$GITHUB_OUTPUT"
+            echo "repo=$REPO" >> "$GITHUB_OUTPUT"
+            echo "email=$EMAIL" >> "$GITHUB_OUTPUT"
+            echo "username=$USERNAME" >> "$GITHUB_OUTPUT"
           else
             echo "deploy=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::部署 secrets 未配置，跳过发布步骤"
+            echo "::warning::部署配置不完整，跳过发布 (需配置 GIT_OWNER/GIT_REPO/ACCESS_TOKEN)"
           fi
-        env:
-          OWNER: ${{ secrets.GIT_OWNER }}
-          REPO: ${{ secrets.GIT_REPO }}
-          TOKEN: ${{ secrets.ACCESS_TOKEN }}
 
       - name: Clone output repository
         if: steps.check.outputs.deploy == 'true'
         uses: GuillaumeFalourd/clone-github-repo-action@v2
         with:
-          owner: ${{ secrets.GIT_OWNER }}
-          repository: ${{ secrets.GIT_REPO }}
+          owner: ${{ steps.check.outputs.owner }}
+          repository: ${{ steps.check.outputs.repo }}
           access-token: ${{ secrets.ACCESS_TOKEN }}
 
       - name: Copy output
@@ -63,8 +78,8 @@ jobs:
         if: steps.check.outputs.deploy == 'true'
         run: |
           cd dol-chinese
-          git config user.email "${{ secrets.GIT_EMAIL }}"
-          git config user.name "${{ secrets.GIT_USERNAME }}"
+          git config user.email "${{ steps.check.outputs.email }}"
+          git config user.name "${{ steps.check.outputs.username }}"
           git add .
           git diff --staged --quiet || git commit -m "稳定版更新 $(date +%Y-%m-%d)"
           git push
