@@ -30,7 +30,22 @@ jobs:
           PARATRANZ_TOKEN: ${{ secrets.PARATRANZ_TOKEN }}
         run: uv run python main.py -D beta
 
+      - name: Check deploy secrets
+        id: check
+        run: |
+          if [ -n "$OWNER" ] && [ -n "$REPO" ] && [ -n "$TOKEN" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::部署 secrets 未配置，跳过发布步骤"
+          fi
+        env:
+          OWNER: ${{ secrets.GIT_OWNER }}
+          REPO: ${{ secrets.GIT_REPO }}
+          TOKEN: ${{ secrets.ACCESS_TOKEN }}
+
       - name: Clone output repository
+        if: steps.check.outputs.deploy == 'true'
         uses: GuillaumeFalourd/clone-github-repo-action@v2
         with:
           owner: ${{ secrets.GIT_OWNER }}
@@ -38,12 +53,14 @@ jobs:
           access-token: ${{ secrets.ACCESS_TOKEN }}
 
       - name: Copy output
+        if: steps.check.outputs.deploy == 'true'
         run: |
           cp degrees-of-lewdity-master/Degrees\ of\ Lewdity*.html dol-chinese/beta.html
           cp degrees-of-lewdity-master/style.css dol-chinese/ 2>/dev/null || true
           cp -r degrees-of-lewdity-master/img dol-chinese/ 2>/dev/null || true
 
       - name: Commit and push
+        if: steps.check.outputs.deploy == 'true'
         run: |
           cd dol-chinese
           git config user.email "${{ secrets.GIT_EMAIL }}"
