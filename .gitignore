@@ -7,20 +7,33 @@
 CREDITS-*.md
 
 .env
-.vscode
-.idea
+.env.*
+!.env.example
+.vscode/
+.idea/
+.serena/
 
-__pycache__
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
 dol
-degrees-of-lewdity-master
-degrees-of-lewdity-world-expansion-master
-dolandriod
-dol-chinese
-setto
+degrees-of-lewdity-master/
+degrees-of-lewdity-world-expansion-master/
+degrees-of-lewdity-dev/
+dolandriod/
+dol-chinese/
+setto/
 
-paratranz
-temp
-raw_dicts
+paratranz/
+temp/
+data/temp/
+data/paratranz/
+data/raw_dicts/
+data/mods/
+raw_dicts/
 
 commits.json
 i18n.json

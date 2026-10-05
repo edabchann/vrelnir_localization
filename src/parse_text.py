@@ -1,4 +1,5 @@
 import re
+from bisect import bisect_right
 from pathlib import Path
 
 from .consts import *
@@ -30,27 +31,27 @@ class ParseTextTwee:
 		if not flag:
 			return
 
+		line_offsets = []
+		content_offset = 0
 		for line in self._lines:
-			flag = False
-			line = line.strip()
-			if not line:
-				self._set_run_bool_list.append(False)
-				continue
+			line_offsets.append((content_offset, content_offset + len(line)))
+			content_offset += len(line)
 
-			if "<<set " not in line and "<<run " not in line:
-				self._set_run_bool_list.append(False)
-				continue
-
-			for set_run_line in compared_lines:
-				if set_run_line not in line:
-					continue
-
-				self._set_run_bool_list.append(True)
-				flag = True
-				break
-
-			if not flag:
-				self._set_run_bool_list.append(False)
+		content = "".join(self._lines)
+		self._set_run_bool_list = [False] * len(self._lines)
+		for set_run_line in compared_lines:
+			search_offset = 0
+			while True:
+				start = content.find(set_run_line, search_offset)
+				if start < 0:
+					break
+				end = start + len(set_run_line)
+				idx = bisect_right(line_offsets, (start, content_offset + 1)) - 1
+				while idx < len(line_offsets) and line_offsets[idx][0] < end:
+					if self._lines[idx].strip():
+						self._set_run_bool_list[idx] = True
+					idx += 1
+				search_offset = start + 1
 
 		if debug:
 			for idx, flag in enumerate(self._set_run_bool_list):
@@ -3017,8 +3018,37 @@ class ParseTextJS:
 		return self.parse_type_only({"plural:", "singular:", "seed_name:", "ingredients:", "type:"})
 
 	def _parse_foodstuff(self):
-		"""json"""
-		return self.parse_type_only({"name:", "singular:", "plural:", "category:", "ingredients:"})
+		"""Food item names, labels, and ingredient lists."""
+		patterns = {
+			"name:",
+			"singular:",
+			"plural:",
+			"category:",
+			"category_cn:",
+			"ingredients:",
+			"ingredients_cn:",
+		}
+		results = []
+		multi_ingredient_flag = False
+
+		for line in self._lines:
+			line = line.strip()
+			if not line:
+				results.append(False)
+				continue
+
+			if re.match(r"ingredients(?:_cn)?\s*:\s*\[", line):
+				multi_ingredient_flag = not line.endswith("],")
+				results.append(True)
+			elif multi_ingredient_flag and line.endswith("],"):
+				multi_ingredient_flag = False
+				results.append(True)
+			elif multi_ingredient_flag:
+				results.append(True)
+			else:
+				results.append(any(pattern in line for pattern in patterns))
+
+		return results
 
 	""" special-masturbation """
 
@@ -3204,7 +3234,7 @@ class ParseTextJS:
 
 	def _parse_story_functions(self):
 		return self.parse_type_only(
-			{"name = (caps ?", "name = caps ?", "name = name[0]"}
+			{"name = ", ".text", "today:"}
 		)
 
 	def _parse_pregnancy_types(self):
@@ -3475,6 +3505,7 @@ class ParseTextJS:
 		multi_swikifier_flag = False
 		multi_result_array_flag = False
 		multi_return_flag = False
+		multi_ingredient_flag = False
 		for line in self._lines:
 			line = line.strip()
 			if not line:
@@ -3534,6 +3565,18 @@ class ParseTextJS:
 				results.append(True)
 				continue
 
+			if re.match(r"ingredients(?:_cn)?\s*:\s*\[", line):
+				multi_ingredient_flag = not line.endswith("],")
+				results.append(True)
+				continue
+			elif multi_ingredient_flag and line.endswith("],"):
+				multi_ingredient_flag = False
+				results.append(True)
+				continue
+			elif multi_ingredient_flag:
+				results.append(True)
+				continue
+
 			if "fragment.append(" in line and any(_ not in line for _ in {"''", "' '", '""', '" "', "``", "` `", "br()"}):
 				results.append(True)
 			elif ("addfemininityfromfactor(" in line and line.endswith(");")) or '"Pregnant Looking Belly"' in line:
@@ -3558,6 +3601,10 @@ class ParseTextJS:
 				or 'item.name' in line
 				or "text:" in line
 				or "textContent" in line
+				or "plural" in line
+				or "category" in line
+				or "singular" in line
+				or "ingredients" in line
 			):
 				results.append(True)
 			else:

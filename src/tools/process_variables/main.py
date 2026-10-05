@@ -5,6 +5,7 @@
 <<run VAR ...>>
 """
 import asyncio
+import hashlib
 import json
 import os
 import re
@@ -19,6 +20,7 @@ from aiofiles import open as aopen
 SELF_ROOT = Path(__file__).parent
 
 set_CONTENTS = None
+set_CONTENTS_FINGERPRINT = None
 
 FREQ_FUNCTIONS = {
     ".push(",
@@ -115,26 +117,56 @@ class VariablesProcess:
         with open(DIR_DATA_ROOT / "json" / "variables_notations.json", "w", encoding="utf-8") as fp:
             json.dump(new_data, fp, ensure_ascii=False, indent=2)
 
-    def fetch_all_set_content(self):
-        """ 获取所有 <<set>> 内容，写入 setto 目录里，有了就不要再创建了"""
-        global set_CONTENTS
+    def _set_content_source_fingerprint(self) -> str:
+        digest = hashlib.sha256()
+        for file in sorted(self._all_file_paths):
+            try:
+                stat = file.stat()
+            except FileNotFoundError:
+                continue
+            digest.update(str(file).encode("utf-8"))
+            digest.update(f"{stat.st_size}:{stat.st_mtime_ns}".encode("ascii"))
+        return digest.hexdigest()
 
-        if set_CONTENTS:
+    def fetch_all_set_content(self):
+        """Get <<set>> and <<run>> content, reusing only a current cache."""
+        global set_CONTENTS, set_CONTENTS_FINGERPRINT
+
+        if set_CONTENTS is not None and set_CONTENTS_FINGERPRINT is not None:
             return set_CONTENTS
 
-        if (SELF_ROOT / "setto" / "_set_contents.json").exists():
-            with open(SELF_ROOT / "setto" / "_set_contents.json", "r", encoding="utf-8") as fp:
-                data = json.load(fp)
-            set_CONTENTS = data
-            return data
+        if not self._all_file_paths:
+            self.fetch_all_file_paths()
 
+        cache_file = SELF_ROOT / "setto" / "_set_contents.json"
+        source_fingerprint = self._set_content_source_fingerprint()
+
+        if cache_file.exists():
+            with open(cache_file, "r", encoding="utf-8") as fp:
+                cache = json.load(fp)
+            if (
+                isinstance(cache, dict)
+                and cache.get("fingerprint") == source_fingerprint
+                and isinstance(cache.get("data"), list)
+            ):
+                set_CONTENTS = cache["data"]
+                set_CONTENTS_FINGERPRINT = source_fingerprint
+                return set_CONTENTS
+
+        self._categorize_all_set_contents = []
         for file in self._all_file_paths:
             self._fetch_all_set_content(file)
 
         set_CONTENTS = self._categorize_all_set_contents
-        os.makedirs(SELF_ROOT / "setto", exist_ok=True)
-        with open(SELF_ROOT / "setto" / "_set_contents.json", "w", encoding="utf-8") as fp:
-            json.dump(self._categorize_all_set_contents, fp, ensure_ascii=False, indent=2)
+        set_CONTENTS_FINGERPRINT = source_fingerprint
+        os.makedirs(cache_file.parent, exist_ok=True)
+        with open(cache_file, "w", encoding="utf-8") as fp:
+            json.dump(
+                {"fingerprint": source_fingerprint, "data": set_CONTENTS},
+                fp,
+                ensure_ascii=False,
+                indent=2,
+            )
 
         # ALL_NEEDED_TRANSLATED_set_CONTENTS = self._categorize_all_needed_translated_set_contents
         # with open(SELF_ROOT / "setto" / "_needed_translated_set_contents.json", "w", encoding="utf-8") as fp:
@@ -173,7 +205,7 @@ class VariablesProcess:
           - set X.FUNC(Y)
         """
 
-        if len(all_set_contents) < 2:
+        if not all_set_contents:
             return
 
         # FIXME: 开摆，不分类了，全部提取出来。
